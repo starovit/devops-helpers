@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.31.2 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: prometheus
+  name: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: prometheus
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.31.2 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/prometheus-grafana-default: "true"
+        io.kompose.service: prometheus
+    spec:
+      containers:
+        - args:
+            - --config.file=/config/prometheus.yml
+          image: prom/prometheus
+          name: prometheus
+          ports:
+            - containerPort: 9090
+              hostPort: 9090
+              protocol: TCP
+          resources: {}
+          volumeMounts:
+            - mountPath: /etc/prometheus
+              name: prometheus-claim0
+            - name: prom-data
+              mountPath: /prometheus/data
+            - name: config-volume
+              mountPath: /config 
+      restartPolicy: Always
+      volumes:
+        - name: prometheus-claim0
+          persistentVolumeClaim:
+            claimName: prometheus-claim0
+        - name: prom-data
+          persistentVolumeClaim:
+            claimName: prom-data
+        - name: config-volume
+          configMap:
+            name: prometheus-config
+status: {}
